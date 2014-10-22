@@ -103,7 +103,18 @@ def upgrade(project, upgraders):
   print(u'All upgrades completed! Objects upgraded/added/removed: %d/%d/%d' % tuple(cnts))
 
 def showInfo(project, args, f=print):
-  class Stop(object): pass
+  def helper(filter, prop):
+    if filter:
+      print('~'*80);
+      print(u'Objects with %s: %s' % (prop, ', '.join(filter)));
+      print('~'*80);
+      candidates = [];
+      for x in filter:
+        for o in project.objects():
+          if x in (p.name for p in o[prop]):
+            candidates.add(x);
+      for o in unique(candidates):
+        f(o);
   if args.types:
     print('~'*80);
     print(u'Objects with types: %s' % ', '.join(args.types));
@@ -112,7 +123,6 @@ def showInfo(project, args, f=print):
       for o in project.objects():
         if o.type == x:
           f(o);
-          break;
   if args.names:
     print('~'*80);
     print(u'Objects with names: %s' % ', '.join(args.names));
@@ -121,43 +131,10 @@ def showInfo(project, args, f=print):
       for o in project.objects():
         if o.name == x:
           f(o);
-          break;
-  if args.props:
-    print('~'*80);
-    print(u'Objects with props: %s' % ', '.join(args.props));
-    print('~'*80);
-    for o in project.objects():
-      try:
-        for x in args.props:
-          for p in o.props:
-            if p.name == x:
-              f(o);
-              raise Stop;
-      except Stop: pass
-  if args.events:
-    print('~'*80);
-    print(u'Objects with events: %s' % ', '.join(args.events));
-    print('~'*80);
-    for o in project.objects():
-      try:
-        for x in args.events:
-          for p in o.events:
-            if p.name == x:
-              f(o);
-              raise Stop;
-      except Stop: pass
-  if args.docs:
-    print('~'*80);
-    print(u'Objects with docs: %s' % ', '.join(args.docs));
-    print('~'*80);
-    for o in project.objects():
-      try:
-        for x in args.docs:
-          for p in o.docs:
-            if p.name == x:
-              f(o);
-              raise Stop;
-      except Stop: pass
+  helper(args.props, 'props');
+  helper(args.events, 'events');
+  helper(args.docs, 'docs');
+
   # Если задан хотя бы один из параметров без аргументов, то выводим список всех объектов.
   if args.types is not None and len(args.types) == 0 \
   or args.names is not None and len(args.names) == 0 \
